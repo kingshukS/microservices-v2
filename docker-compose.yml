@@ -1,0 +1,143 @@
+version: '3.7'
+
+services:
+  currency-exchange:
+    image: kingshuk1808/currency-exchange-service-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8000:8000"
+    networks:
+      - currency-network
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - zipkin-server
+      - spring-cloud-config-server
+    links:
+      - eureka-server
+    environment:
+      SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411
+      CONFIG_SERVER_URI: optional:configserver:http://spring-cloud-config-server:8888
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+
+  currency-conversion:
+    image: kingshuk1808/currency-conversion-service-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8100:8100"
+    networks:
+      - currency-network
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - zipkin-server
+      - spring-cloud-config-server
+    links:
+      - eureka-server
+    environment:
+      SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411
+      CONFIG_SERVER_URI: optional:configserver:http://spring-cloud-config-server:8888
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+
+  limit-service:
+    image: kingshuk1808/limits-service-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8080:8080"
+    networks:
+      - currency-network
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - zipkin-server
+      - spring-cloud-config-server
+    links:
+      - eureka-server
+    environment:
+      SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411
+      CONFIG_SERVER_URI: optional:configserver:http://spring-cloud-config-server:8888
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+
+  spring-cloud-config-server:
+    image: kingshuk1808/spring-cloud-config-server-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8888:8888"
+    networks:
+      - currency-network
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - zipkin-server
+    links:
+      - eureka-server
+    environment:
+      SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+
+  api-gateway:
+    image: kingshuk1808/api-gateway-service-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8765:8765"
+    networks:
+      - currency-network
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - zipkin-server 
+      - spring-cloud-config-server
+    links:
+      - eureka-server
+    environment:
+      SERVICE_URL_DEFAULT_ZONE: http://eureka-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411
+      CONFIG_SERVER_URI: optional:configserver:http://spring-cloud-config-server:8888
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 1024m
+    ports:
+       - "9411:9411"
+    networks:
+      - currency-network
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+    restart: always #Restart if there is a problem starting up
+
+  rabbitmq:
+    image: rabbitmq:3.9.12-management
+    mem_limit: 300m
+    ports:
+       - "5672:5672"
+       - "15672:15672"
+    networks:
+      - currency-network
+
+  eureka-server:
+    image: kingshuk1808/discovery-server-v2:1.0.0
+    mem_limit: 1024m
+    ports:
+      - "8761:8761"
+    networks:
+      - currency-network
+
+networks:
+  currency-network:
